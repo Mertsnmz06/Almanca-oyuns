@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Almanca Taşıma Aracı Quiz Oyunu</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f0f4f8;
+      padding: 20px;
+      text-align: center;
+    }
+    .question {
+      font-size: 1.5rem;
+      margin: 20px 0;
+    }
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+    }
+    .option {
+      padding: 10px 20px;
+      background-color: #e0e7ff;
+      border: 2px solid #4f46e5;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+    .option.correct {
+      background-color: #c8e6c9;
+      border-color: green;
+    }
+    .option.incorrect {
+      background-color: #ffcdd2;
+      border-color: red;
+    }
+    .button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    #score, #timer, #level {
+      font-weight: bold;
+      font-size: 1.2rem;
+      margin: 10px;
+    }
+    #start-screen, #game-screen {
+      display: none;
+    }
+    .level-button {
+      padding: 10px 15px;
+      margin: 5px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h2>🚍 Almanca Taşıma Aracı Quiz Oyunu</h2>
+
+  <div id="start-screen">
+    <button class="button" onclick="showLevelSelect()">Play</button>
+  </div>
+
+  <div id="level-select" style="display:none">
+    <h3>Bölüm Seç</h3>
+    <div id="level-buttons"></div>
+  </div>
+
+  <div id="game-screen">
+    <div id="timer">Kalan Süre: 90 saniye</div>
+    <div id="level">Bölüm: 1</div>
+    <div id="question-container"></div>
+    <div id="score">Puan: 0</div>
+    <button class="button" onclick="loadNextQuestion()">Sonraki Soru</button>
+    <button class="button" id="back-button" style="display: none;" onclick="backToMenu()">Ana Menüye Dön</button>
+  </div>
+
+  <script>
+    const levels = [
+      [
+        { sentence: "Ich fahre mit dem __ zur Arbeit.", options: ["das Auto", "der Bus", "das Motorrad", "das Flugzeug"], answer: "das Auto" },
+        { sentence: "Sie fährt mit dem __ zur Schule.", options: ["der Bus", "der Zug", "das Fahrrad", "das Schiff"], answer: "der Bus" },
+        { sentence: "Wir fahren mit dem __ nach Berlin.", options: ["der Zug", "das Flugzeug", "das Taxi", "das Fahrrad"], answer: "der Zug" },
+        { sentence: "Er fährt mit dem __ zur Universität.", options: ["das Fahrrad", "das Auto", "der Bus", "das Motorrad"], answer: "das Fahrrad" },
+        { sentence: "Ich fliege mit dem __ nach Paris.", options: ["das Flugzeug", "das Schiff", "der Zug", "das Motorrad"], answer: "das Flugzeug" }
+      ],
+      [
+        { sentence: "Ich fahre mit dem __ nach Hause.", options: ["das Motorrad", "das Taxi", "der Lkw", "das Fahrrad"], answer: "das Motorrad" },
+        { sentence: "Wir fahren mit dem __ auf dem See.", options: ["das Schiff", "der Zug", "das Auto", "das Flugzeug"], answer: "das Schiff" },
+        { sentence: "Er fährt mit der __ in der Stadt.", options: ["die Straßenbahn", "das Fahrrad", "der Lkw", "das Auto"], answer: "die Straßenbahn" },
+        { sentence: "Ich fahre mit dem __ zum Flughafen.", options: ["das Taxi", "das Motorrad", "das Flugzeug", "der Bus"], answer: "das Taxi" },
+        { sentence: "Ich fahre mit dem __ in die Arbeit.", options: ["der Lkw", "das Fahrrad", "das Schiff", "das Auto"], answer: "der Lkw" }
+      ],
+      [
+        { sentence: "Wir fahren mit dem __ zur Arbeit.", options: ["der Bus", "das Flugzeug", "der Zug", "das Taxi"], answer: "der Bus" },
+        { sentence: "Ich fahre mit dem __ nach Hause.", options: ["das Auto", "der Lkw", "das Fahrrad", "das Schiff"], answer: "das Auto" },
+        { sentence: "Er fährt mit dem __ nach Berlin.", options: ["das Fahrrad", "der Bus", "das Flugzeug", "das Taxi"], answer: "das Fahrrad" },
+        { sentence: "Sie fährt mit dem __ nach London.", options: ["der Zug", "das Motorrad", "der Lkw", "das Schiff"], answer: "der Zug" },
+        { sentence: "Wir fliegen mit dem __ nach Venedig.", options: ["das Flugzeug", "das Schiff", "der Zug", "das Motorrad"], answer: "das Flugzeug" }
+      ],
+      [
+        { sentence: "Ich fahre mit dem __ auf dem Wasser.", options: ["das Schiff", "das Fahrrad", "das Taxi", "der Zug"], answer: "das Schiff" },
+        { sentence: "Er fliegt mit dem __ nach New York.", options: ["das Flugzeug", "der Lkw", "der Bus", "der Zug"], answer: "das Flugzeug" },
+        { sentence: "Ich fahre mit dem __ in die Stadt.", options: ["das Taxi", "das Motorrad", "das Fahrrad", "das Flugzeug"], answer: "das Taxi" },
+        { sentence: "Er fährt mit dem __ in die Berge.", options: ["der Lkw", "das Auto", "der Bus", "das Motorrad"], answer: "der Lkw" },
+        { sentence: "Wir fahren mit der __ nach Hamburg.", options: ["die Straßenbahn", "das Flugzeug", "das Auto", "der Zug"], answer: "die Straßenbahn" }
+      ],
+      [
+        { sentence: "Ich fahre mit dem __ zur Arbeit.", options: ["das Motorrad", "das Auto", "der Bus", "das Taxi"], answer: "das Motorrad" },
+        { sentence: "Wir fahren mit dem __ nach Berlin.", options: ["der Bus", "das Motorrad", "der Zug", "das Fahrrad"], answer: "der Bus" },
+        { sentence: "Ich fahre mit dem __ nach Paris.", options: ["das Auto", "das Fahrrad", "der Zug", "das Flugzeug"], answer: "das Auto" },
+        { sentence: "Er fährt mit dem __ nach München.", options: ["der Zug", "das Lkw", "das Schiff", "das Motorrad"], answer: "der Zug" },
+        { sentence: "Wir fliegen mit dem __ nach London.", options: ["das Flugzeug", "der Zug", "das Taxi", "der Bus"], answer: "das Flugzeug" }
+      ]
+    ];
+
+    let currentLevel = 0;
+    let currentQuestion = 0;
+    let score = 0;
+    let timeLeft = 90;
+    let timerInterval;
+
+    window.onload = () => {
+      document.getElementById("start-screen").style.display = "block";
+    };
+
+    function showLevelSelect() {
+      document.getElementById("start-screen").style.display = "none";
+      const levelSelect = document.getElementById("level-select");
+      const levelButtonsDiv = document.getElementById("level-buttons");
+      levelButtonsDiv.innerHTML = "";
+      levels.forEach((_, idx) => {
+        const btn = document.createElement("button");
+        btn.textContent = `Bölüm ${idx + 1}`;
+        btn.className = "level-button";
+        btn.onclick = () => startLevel(idx);
+        levelButtonsDiv.appendChild(btn);
+      });
+      levelSelect.style.display = "block";
+    }
+
+    function startLevel(levelIndex) {
+      currentLevel = levelIndex;
+      currentQuestion = 0;
+      score = 0;
+      timeLeft = 90;
+      document.getElementById("level-select").style.display = "none";
+      document.getElementById("game-screen").style.display = "block";
+      document.getElementById("score").textContent = "Puan: 0";
+      document.getElementById("level").textContent = `Bölüm: ${currentLevel + 1}`;
+      document.getElementById("back-button").style.display = "none";
+      startTimer();
+      loadNextQuestion();
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      const timerEl = document.getElementById("timer");
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = `Kalan Süre: ${timeLeft} saniye`;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function endGame() {
+      const container = document.getElementById("question-container");
+      container.innerHTML = `<h3>Süre doldu! ⏰</h3><p>Toplam Puan: ${score}</p><button class="button" onclick="backToMenu()">Ana Menüye Dön</button>`;
+    }
+
+    function loadNextQuestion() {
+      const container = document.getElementById("question-container");
+      container.innerHTML = "";
+
+      const levelData = levels[currentLevel];
+      if (currentQuestion >= levelData.length) {
+        clearInterval(timerInterval);
+        container.innerHTML = `<h3>Bölüm ${currentLevel + 1} tamamlandı 🎉</h3><p>Toplam Puan: ${score}</p><button class="button" onclick="backToMenu()">Ana Menüye Dön</button>`;
+        return;
+      }
+
+      const q = levelData[currentQuestion];
+      const questionEl = document.createElement("div");
+      questionEl.classList.add("question");
+      questionEl.textContent = q.sentence;
+
+      const optionsDiv = document.createElement("div");
+      optionsDiv.classList.add("options");
+
+      // Şıkları karıştır
+      const shuffledOptions = shuffleArray(q.options);
+
+      shuffledOptions.forEach(option => {
+        const btn = document.createElement("div");
+        btn.classList.add("option");
+        btn.textContent = option;
+        btn.onclick = () => {
+          if (option === q.answer) {
+            btn.classList.add("correct");
+            score += 10;
+          } else {
+            btn.classList.add("incorrect");
+            setTimeout(() => {
+              alert(`Doğru Cevap: ${q.answer}`);
+            }, 500);
+            score -= 5;
+          }
+          document.getElementById("score").textContent = "Puan: " + score;
+          Array.from(optionsDiv.children).forEach(child => child.onclick = null);
+        };
+        optionsDiv.appendChild(btn);
+      });
+
+      container.appendChild(questionEl);
+      container.appendChild(optionsDiv);
+      currentQuestion++;
+    }
+
+    // Şıkların sırasını karıştırma fonksiyonu
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]]; // Elementleri takas yap
+      }
+      return array;
+    }
+
+    function backToMenu() {
+      document.getElementById("game-screen").style.display = "none";
+      document.getElementById("start-screen").style.display = "block";
+    }
+  </script>
+</body>
+</html>
